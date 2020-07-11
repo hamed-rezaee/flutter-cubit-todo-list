@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_cubit/flutter_cubit.dart';
+
+import 'package:flutter_cubit_todo/cubit/todo_cubit.dart';
+import 'package:flutter_cubit_todo/models/todo_model.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key, this.title}) : super(key: key);
@@ -10,6 +14,19 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  TodoCubit _todoCubit;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (_todoCubit == null) {
+      _todoCubit = CubitProvider.of<TodoCubit>(context);
+
+      _todoCubit.getTodoList();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,59 +55,80 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           DraggableScrollableSheet(
-              maxChildSize: 0.85,
-              builder: (BuildContext context, ScrollController controller) =>
-                  Stack(
-                    overflow: Overflow.visible,
-                    children: <Widget>[
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                            topRight: Radius.circular(16.0),
-                            topLeft: Radius.circular(16.0),
-                          ),
-                        ),
-                        child: ListView.builder(
-                          controller: controller,
-                          itemCount: 20,
-                          itemBuilder: (BuildContext context, int index) =>
-                              ListTile(
-                            isThreeLine: true,
-                            title: Text(
-                              'Task No $index',
-                              style: TextStyle(
-                                color: Colors.grey[900],
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text(
-                              'This is the Detail of Task No $index',
-                              style: TextStyle(
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                            trailing: Icon(
-                              Icons.check_circle,
-                              color: Colors.greenAccent,
-                            ),
-                          ),
-                        ),
+            maxChildSize: 0.85,
+            builder: (BuildContext context, ScrollController controller) =>
+                Stack(
+              overflow: Overflow.visible,
+              children: <Widget>[
+                Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(8.0),
+                        topLeft: Radius.circular(8.0),
                       ),
-                      Positioned(
-                        top: -28.0,
-                        right: 32.0,
-                        child: FloatingActionButton(
-                          child: Icon(
-                            Icons.add,
-                            color: Colors.white,
-                          ),
-                          backgroundColor: Colors.pinkAccent,
-                          onPressed: () {},
+                    ),
+                    child: CubitBuilder<TodoCubit, TodoState>(
+                      builder: (BuildContext context, TodoState state) {
+                        if (state is TodoLoaded) {
+                          return ListView.builder(
+                            controller: controller,
+                            itemCount: state.models.length,
+                            itemBuilder: (BuildContext context, int index) =>
+                                ListTile(
+                              isThreeLine: true,
+                              title: Text(
+                                state.models[index].title,
+                                style: TextStyle(
+                                  color: Colors.grey[900],
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                state.models[index].detail,
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                              trailing: Icon(
+                                Icons.check_circle,
+                                color: Colors.greenAccent,
+                              ),
+                            ),
+                          );
+                        } else if (state is TodoError) {
+                          return Center(
+                            child: Text(state.message),
+                          );
+                        }
+
+                        return Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      },
+                    )),
+                Positioned(
+                  top: -28.0,
+                  right: 32.0,
+                  child: FloatingActionButton(
+                    child: Icon(
+                      Icons.add,
+                      color: Colors.white,
+                    ),
+                    backgroundColor: Colors.pinkAccent,
+                    onPressed: () {
+                      _todoCubit.addNewItem(
+                        TodoModel(
+                          title: 'added by user',
+                          detail: 'added by user detail.',
                         ),
-                      )
-                    ],
-                  )),
+                      );
+                    },
+                  ),
+                )
+              ],
+            ),
+          ),
         ],
       ),
     );

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_cubit/flutter_cubit.dart';
 
+import 'package:flutter_cubit_todo/cubit/todo_cubit.dart';
 import 'package:flutter_cubit_todo/home_page.dart';
 
 void main() => runApp(App());
@@ -13,7 +15,10 @@ class App extends StatelessWidget {
         primarySwatch: Colors.red,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: HomePage(title: 'Home Page'),
+      home: CubitProvider(
+        create: (context) => TodoCubit(),
+        child: HomePage(title: 'Home Page'),
+      ),
     );
   }
 }
