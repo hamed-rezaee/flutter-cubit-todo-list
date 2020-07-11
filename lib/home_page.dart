@@ -23,7 +23,7 @@ class _HomePageState extends State<HomePage> {
     if (_todoCubit == null) {
       _todoCubit = CubitProvider.of<TodoCubit>(context);
 
-      _todoCubit.getTodoList();
+      _todoCubit.getTodoList(true);
     }
   }
 
@@ -61,17 +61,19 @@ class _HomePageState extends State<HomePage> {
               overflow: Overflow.visible,
               children: <Widget>[
                 Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(8.0),
-                        topLeft: Radius.circular(8.0),
-                      ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(8.0),
+                      topLeft: Radius.circular(8.0),
                     ),
-                    child: CubitBuilder<TodoCubit, TodoState>(
-                      builder: (BuildContext context, TodoState state) {
-                        if (state is TodoLoaded) {
-                          return ListView.builder(
+                  ),
+                  child: CubitBuilder<TodoCubit, TodoState>(
+                    builder: (BuildContext context, TodoState state) {
+                      if (state is TodoLoaded) {
+                        return RefreshIndicator(
+                          onRefresh: () async => _todoCubit.getTodoList(false),
+                          child: ListView.builder(
                             controller: controller,
                             itemCount: state.models.length,
                             itemBuilder: (BuildContext context, int index) =>
@@ -95,18 +97,20 @@ class _HomePageState extends State<HomePage> {
                                 color: Colors.greenAccent,
                               ),
                             ),
-                          );
-                        } else if (state is TodoError) {
-                          return Center(
-                            child: Text(state.message),
-                          );
-                        }
-
-                        return Center(
-                          child: CircularProgressIndicator(),
+                          ),
                         );
-                      },
-                    )),
+                      } else if (state is TodoError) {
+                        return Center(
+                          child: Text(state.message),
+                        );
+                      }
+
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    },
+                  ),
+                ),
                 Positioned(
                   top: -28.0,
                   right: 32.0,
@@ -116,13 +120,15 @@ class _HomePageState extends State<HomePage> {
                       color: Colors.white,
                     ),
                     backgroundColor: Colors.pinkAccent,
-                    onPressed: () {
-                      _todoCubit.addNewItem(
+                    onPressed: () async {
+                      showProgressDialog(context);
+                      await _todoCubit.addNewItem(
                         TodoModel(
                           title: 'added by user',
                           detail: 'added by user detail.',
                         ),
                       );
+                      Navigator.pop(context);
                     },
                   ),
                 )
@@ -131,6 +137,29 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+    );
+  }
+
+  void showProgressDialog(BuildContext context) {
+    AlertDialog alert = AlertDialog(
+      content: Row(
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(width: 16.0),
+          Text(
+            "Loading...",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
     );
   }
 }

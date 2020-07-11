@@ -14,9 +14,11 @@ class TodoCubit extends Cubit<TodoState> {
     super.onTransition(transition);
   }
 
-  void getTodoList() async {
+  void getTodoList(bool showLoading) async {
     try {
-      emit(TodoLoading());
+      if (showLoading) {
+        emit(TodoLoading());
+      }
 
       List<TodoModel> result = await Future<List<TodoModel>>.delayed(
         Duration(seconds: 2),
